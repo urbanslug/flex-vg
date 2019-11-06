@@ -1,40 +1,49 @@
-use needletail::{parse_sequence_path, Sequence};
-use std::env;
+#![allow(unused_imports)]
+use needletail::{parse_sequence_path, Sequence, SequenceRecord};
+use std::borrow::Cow;
+use std::str;
+use vcf::*;
+use flate2::read::MultiGzDecoder;
+use std::fs::File;
+use std::io;
 
-fn main() {
-    let filename: String = env::args().nth(1).unwrap();
+fn process_fasta(x: SequenceRecord) -> () {
+    let y = str::from_utf8(&x.id).unwrap();
+    println!("{}", y);
+    
+}
 
-    let mut n_bases = 0;
-    let mut n_valid_kmers = 0;
+const VCF_FILE: &str = "/Users/urbanslug/src/racket/graphite/data/RSV/refererence_and_vcf_file/H_3801_22_04.freebayes.vcf";
+const FASTA_FILE: &str = "/Users/urbanslug/src/racket/graphite/data/RSV/refererence_and_vcf_file/9465113.fa";
+//const FASTA_FILE: &str = "/Users/urbanslug/src/racket/graphite/data/test/tiny_fake_ref.fa";
+
+
+
+fn read_vcf() {
+    let p = File::open(VCF_FILE).unwrap();
+    let mut vcf_reader = VCFReader::new(p).unwrap();
+
+    for one in vcf_reader {
+        let record = one.unwrap();
+        // process a record
+        println!("{}",  record.chromosome);
+    }
+}
+
+fn read_fasta() {
+    let filename = FASTA_FILE;
+
     parse_sequence_path(
-	filename,
+        filename,
         |_| {},
         |seq| {
-            // seq.id is the name of the record
-            // seq.seq is the base sequence
-            // seq.qual is an optional quality score
-
-            // keep track of the total number of bases
-            n_bases += seq.seq.len();
-
-            // normalize to make sure all the bases are consistantly capitalized
-            let norm_seq = seq.normalize(false);
-            // we make a reverse complemented copy of the sequence first for
-            // `canonical_kmers` to draw the complemented sequences from.
-            let rc = norm_seq.reverse_complement();
-            // now we keep track of the number of AAAAs (or TTTTs via
-            // canonicalization) in the file; note we also get the postion (i.0;
-            // in the event there were `N`-containing kmers that were skipped)
-            // and whether the sequence was complemented (i.2) in addition to
-            // the canonical kmer (i.1)
-            for (_, kmer, _) in norm_seq.canonical_kmers(4, &rc) {
-                if kmer == b"AAAA" {
-                    n_valid_kmers += 1;
-                }
-            }
+            process_fasta(seq);
         },
     )
     .expect("parsing failed");
-    println!("There are {} bases in your file.", n_bases);
-    println!("There are {} AAAAs in your file.", n_valid_kmers);
+}
+
+fn main() {
+    //read_vcf();
+    read_fasta();
 }

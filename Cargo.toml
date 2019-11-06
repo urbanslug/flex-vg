@@ -8,4 +8,7 @@ edition = "2018"
 
 [dependencies]
 needletail = "^0.3.1"
-fastq = { git = "https://github.com/aseyboldt/fastq-rs.git" }
+serde = "1.0.102"
+vcf= "0.1.0"
+# fastq = { git = "https://github.com/aseyboldt/fastq-rs.git" }
+flate2 = "1.0.12"
