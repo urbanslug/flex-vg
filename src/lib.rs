@@ -11,6 +11,8 @@ use std::io::Read;
 // https://github.com/onecodex/needletail
 
 
+mod variation;
+
 fn splitter(seq: SequenceRecord) -> () {
     let g = str::from_utf8(&seq.id).unwrap();
     println!("{}", g);
