@@ -13,7 +13,11 @@ debug=true
 
 [dependencies]
 needletail = "^0.3.1"
-serde = "^1.0.102"
+serde = {version = "^1.0.102", features = ["derive"]}
 vcf = "^0.1.0"
 serde_cbor = "^0.10.2"
 serde_derive = "^1.0.102"
+serde_test = "^1.0.102"
+
+bincode = "^1.2.0"
+serde_json = "1.0"
