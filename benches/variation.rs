@@ -1,6 +1,5 @@
 #![feature(test)]
 
-
 #[cfg(test)]
 mod tests {
     extern crate test;

@@ -1,9 +1,8 @@
-use std::fs::{self, File};
 use std::error::Error;
+use std::fs::{self, File};
 // Graph serialization
+use serde_test::{assert_ser_tokens, assert_tokens, Token};
 use std::collections::HashMap;
-use serde_test::{Token, assert_tokens, assert_ser_tokens};
-
 
 // Serialize with serde CBOR
 
@@ -17,21 +16,19 @@ mod tests {
 
         // serialize and deserialize
 
-        assert_tokens(&my_map, &[
-            Token::Map {len: Some(0)},
-            Token::MapEnd,
-        ]);
+        assert_tokens(&my_map, &[Token::Map { len: Some(0) }, Token::MapEnd]);
 
         my_map.insert(String::from("age"), 32);
 
-        assert_tokens(&my_map, &[
-            Token::Map {len: Some(1)},
-
-            Token::String("age"),
-            Token::U32(32),
-
-            Token::MapEnd,
-        ]);
+        assert_tokens(
+            &my_map,
+            &[
+                Token::Map { len: Some(1) },
+                Token::String("age"),
+                Token::U32(32),
+                Token::MapEnd,
+            ],
+        );
     }
 
     #[test]
@@ -48,18 +45,14 @@ mod tests {
 
         assert_eq!(my_deserialized_map, my_map);
 
-
         fs::remove_file(filename);
     }
-
 }
 
-
-fn serialize_graph(filename: &str, my_map: &HashMap<String, u32> ) -> Result<(), Box<dyn Error>> {
+fn serialize_graph(filename: &str, my_map: &HashMap<String, u32>) -> Result<(), Box<dyn Error>> {
     // serialize
     let bin_file = File::create(filename)?;
     serde_cbor::to_writer(bin_file, my_map)?;
-
 
     Ok(())
 }

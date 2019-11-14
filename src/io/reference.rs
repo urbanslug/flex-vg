@@ -2,16 +2,12 @@ use needletail::{self, SequenceRecord};
 use std::borrow::Cow;
 use std::io::Cursor;
 // use stringreader::StringReader;
-use std::str;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
-use std::collections::HashMap;
-
+use std::str;
 
 // https://github.com/onecodex/needletail
-
-
-
 
 fn splitter(seq: SequenceRecord) -> () {
     let g = str::from_utf8(&seq.id).unwrap();
@@ -19,13 +15,14 @@ fn splitter(seq: SequenceRecord) -> () {
 }
 
 fn other_splitter<'a>(seq: &'a Cow<str>, graph: &mut HashMap<u64, &'a str>) -> () {
-    let x: &'a str =  &seq[0..10];
+    let x: &'a str = &seq[0..10];
     graph.insert(10, x);
     ()
 }
 
 fn old_main() {
-    let seq: String = String::from("\
+    let seq: String = String::from(
+        "\
         ACAACAAACTTGCGTAAACCAAAAAAATGGGGC\
         AAATAAGAATTTGATAAGTACCACTTAAATTTA\
         ACTCCTTTGGTTAGAGATGGGCAGCAACTCATT\
@@ -34,7 +31,8 @@ CCTGGGACACTCTCAATCATCTATTATTCATATC\
 ATCGTGCTTATACAAGTTAAATCTTAAATCTATA\
 GCACAAATCACATTATCTATTTTGGCAATGATAA\
 TCTCAACCTCACGAGTATGATAGCACAAATCAGT\
-");
+",
+    );
 
     let mut graph: HashMap<u64, &str> = HashMap::new();
 
@@ -44,17 +42,16 @@ TCTCAACCTCACGAGTATGATAGCACAAATCAGT\
     //println!("{}", first_ten);
     let v = 10u64;
     println!("{}", graph.get(&v).unwrap());
-
-
 }
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
     use super::*;
+    use std::io::Cursor;
 
     fn return_fasta_data() -> Cursor<&'static str> {
-        let fasta_data: Cursor<&str> =  Cursor::new("\
+        let fasta_data: Cursor<&str> = Cursor::new(
+            "\
             >chr1
 GATCATCGGTTACACAGCTAAGTTTGACCGGCGCAGAAATGCCATATAAA
 >chr2
@@ -68,7 +65,8 @@ ACTAGGGTGCCAGGACAGTTACAAGTCTGAGAGACTGCAGACAATCTAAC
 >chrY
 CCTTTGGTTGGTTGGAGGTGTGTGGGCGGGGTTGGGGGCGGTCTCTTGCT
 ACTAGGGTGCCAGGACAGTTACAAGTCTGAGAGACTGCAGACAATCTAAC
-");
+",
+        );
         fasta_data
     }
 
@@ -77,7 +75,6 @@ ACTAGGGTGCCAGGACAGTTACAAGTCTGAGAGACTGCAGACAATCTAAC
         let data = return_fasta_data();
         process_fasta(data);
     }
-
 }
 
 fn process_fasta<R: Read>(fasta_data: R) -> () {
@@ -89,7 +86,7 @@ fn process_fasta<R: Read>(fasta_data: R) -> () {
             splitter(seq);
         },
     )
-        .expect("parsing failed");
+    .expect("parsing failed");
 
     let chr1 = vec![99, 104, 114, 111, 109, 111, 115, 111, 109, 101, 49];
     let chr1_cow: Cow<[u8]> = Cow::Borrowed(&chr1);
@@ -101,21 +98,19 @@ fn read_ref() {
     process_fasta(f);
 }
 
-struct Slice{
+struct Slice {
     index: u64,
     len: u64,
 }
 
-
 struct SlicedVCFRecord {
     vcf_record: vcf::VCFRecord,
-    slice: Slice
+    slice: Slice,
 }
 
-
-
 fn process_vcf() -> Vec<SlicedVCFRecord> {
-    let f = File::open("test/data/RSV/refererence_and_vcf_file/fake_H_3801_22_04.freebayes.vcf").unwrap();
+    let f = File::open("test/data/RSV/refererence_and_vcf_file/fake_H_3801_22_04.freebayes.vcf")
+        .unwrap();
     let vcf_reader = vcf::VCFReader::new(f).unwrap();
 
     println!("{:?}", *vcf_reader.header());
@@ -127,17 +122,12 @@ fn process_vcf() -> Vec<SlicedVCFRecord> {
         let index = start;
         let len = record.position - start;
 
-        let slice = Slice {
-            index,
-            len
-        };
+        let slice = Slice { index, len };
 
-        v.push(
-            SlicedVCFRecord {
-                vcf_record: record,
-                slice,
-            }
-        );
+        v.push(SlicedVCFRecord {
+            vcf_record: record,
+            slice,
+        });
     }
     v
 }

@@ -1,3 +1,4 @@
+pub mod cli;
 mod reference;
-pub mod variation;
 mod serialization;
+pub mod variation;

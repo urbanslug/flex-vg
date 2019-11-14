@@ -1,8 +1,9 @@
 [package]
 name = "graphite"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Njagi Mwaniki <njagi@urbanslug.com>"]
 edition = "2018"
+description = "A variation graph tool.\n"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,12 +13,19 @@ lto = true
 debug=true
 
 [dependencies]
-needletail = "^0.3.1"
-serde = {version = "^1.0.102", features = ["derive"]}
+# CLI args
+clap = "^2.33.0"
+
+# Input
+## Variation
 vcf = "^0.1.0"
+
+## Reference
+needletail = "^0.3.1"
+
+# Serialization 
+serde = {version = "^1.0.102", features = ["derive"]}
 serde_cbor = "^0.10.2"
 serde_derive = "^1.0.102"
 serde_test = "^1.0.102"
-
-bincode = "^1.2.0"
 serde_json = "1.0"
