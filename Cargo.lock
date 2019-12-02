@@ -139,7 +139,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphite"
+name = "flex-vg"
 version = "0.0.1"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -1,5 +1,5 @@
 [package]
-name = "graphite"
+name = "flex-vg"
 version = "0.0.1"
 authors = ["Njagi Mwaniki <njagi@urbanslug.com>"]
 edition = "2018"

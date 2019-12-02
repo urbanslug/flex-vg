@@ -2,22 +2,23 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use vcf;
 
-// This is essentially a slice
-// should it also contain the string?
-// A k-mer from a reference
-struct Kmer {
+/// A slice exists in relation to a reference.
+/// This is the index and the length for which it runs
+struct Slice {
     index: u64,
     len: u64,
 }
 
-// This is a VCF record plus a kmer (essentially a Slice).
 // Would it work better as a tuple struct?
+/// We parse VCF files to get VCFRecords and specifically want to store slices
+/// so that we can easily split references.
 pub struct Variation {
     vcf_record: vcf::VCFRecord,
-    kmer: Kmer,
+    kmer: Slice,
 }
 
-fn gen_variations(vcf_reader: vcf::VCFReader<BufReader<File>>) -> Vec<Variation> {
+//
+pub fn gen_variations(vcf_reader: &mut vcf::VCFReader<BufReader<File>>) -> Vec<Variation> {
     let start = 0;
     let mut v: Vec<Variation> = vec![];
     for l in vcf_reader {
@@ -25,7 +26,7 @@ fn gen_variations(vcf_reader: vcf::VCFReader<BufReader<File>>) -> Vec<Variation>
         let index = start;
         let len = record.position - start;
 
-        let slice = Kmer { index, len };
+        let slice = Slice { index, len };
 
         v.push(Variation {
             vcf_record: record,
@@ -35,16 +36,14 @@ fn gen_variations(vcf_reader: vcf::VCFReader<BufReader<File>>) -> Vec<Variation>
     v
 }
 
-
-
-// Why is this test so slow?
-pub fn handle_vcf() -> Vec<Variation> {
-    let fp = "/Users/mmwaniki/data/mouse_mm10/C57BL/4512-JFI-0333_C57BL_6J_two_lanes_large_svs.vcf";
+pub fn open_vcf(fp: &str) -> vcf::VCFReader<BufReader<File>> {
     let f = File::open(fp).unwrap();
-    let vcf_reader = vcf::VCFReader::new(f).unwrap();
+    vcf::VCFReader::new(f).unwrap()
+}
 
-    let variations = gen_variations(vcf_reader);
-
+pub fn handle_vcf(fp: &str) -> Vec<Variation> {
+    let mut vcf_reader = open_vcf(fp);
+    let variations = gen_variations(&mut vcf_reader);
     variations
 }
 
@@ -53,6 +52,8 @@ mod tests {
     use super::*;
     #[test]
     fn late() {
-        assert!(handle_vcf().len() > 0);
+        let fp =
+            "/Users/mmwaniki/data/mouse_mm10/C57BL/4512-JFI-0333_C57BL_6J_two_lanes_large_svs.vcf";
+        assert!(handle_vcf(fp).len() > 0);
     }
 }
