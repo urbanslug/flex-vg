@@ -60,3 +60,39 @@ mod tests {
         assert_eq!(record.alternative, vec!["A", "T"]);
     }
 }
+
+// ------- OLD CRAP ------
+
+struct Slice {
+    index: u64,
+    len: u64,
+}
+
+struct SlicedVCFRecord {
+    vcf_record: vcf::VCFRecord,
+    slice: Slice,
+}
+
+fn process_vcf() -> Vec<SlicedVCFRecord> {
+    let f = File::open("test/data/RSV/refererence_and_vcf_file/fake_H_3801_22_04.freebayes.vcf")
+        .unwrap();
+    let vcf_reader = vcf::VCFReader::new(f).unwrap();
+
+    println!("{:?}", *vcf_reader.header());
+
+    let start = 0;
+    let mut v: Vec<SlicedVCFRecord> = vec![];
+    for l in vcf_reader {
+        let record = l.unwrap();
+        let index = start;
+        let len = record.position - start;
+
+        let slice = Slice { index, len };
+
+        v.push(SlicedVCFRecord {
+            vcf_record: record,
+            slice,
+        });
+    }
+    v
+}
