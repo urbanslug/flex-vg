@@ -3,7 +3,7 @@ use std::str;
 // Files
 use std::fs::File;
 use std::io::Read;
-use std::io::{BufRead, BufReader};
+use std::io::{BufReader};
 
 // VCF
 use vcf::{self, VCFReader, VCFRecord};
@@ -11,9 +11,6 @@ use vcf::{self, VCFReader, VCFRecord};
 // Reference
 use needletail::{self, SequenceRecord};
 use std::borrow::Cow;
-use std::io::Cursor;
-// use stringreader::StringReader;
-use std::collections::HashMap;
 
 use crate::io::types::{Buf, Seeker};
 

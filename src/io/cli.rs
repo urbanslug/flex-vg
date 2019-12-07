@@ -1,6 +1,5 @@
 use clap::{App, Arg, SubCommand};
 use std::env;
-use std::path::Path;
 
 // Env vars
 const NAME: &str = env!("CARGO_PKG_NAME");

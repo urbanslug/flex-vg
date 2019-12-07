@@ -1,5 +1,6 @@
-// Holds the previous position we sliced the reference at
-// Helps to *slice* the reference
+//! Holds the previous position we sliced the reference at
+//! Helps to *slice* the reference
+
 pub struct Seeker {
     chromosome: String,
     previous_position: u64,
@@ -19,12 +20,6 @@ impl Seeker {
 
     pub fn position(&self) ->  u64{
         self.previous_position
-    }
-
-    pub fn update(mut self, chromosome: String, previous_position: u64) -> Self {
-        self.previous_position = previous_position;
-        self.chromosome = chromosome;
-        self
     }
 }
 

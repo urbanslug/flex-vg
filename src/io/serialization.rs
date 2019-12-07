@@ -1,13 +1,24 @@
+//! Serialize with serde CBOR
+
+use std::fs::{File};
 use std::error::Error;
-use std::fs::{self, File};
-// Graph serialization
-use serde_test::{assert_ser_tokens, assert_tokens, Token};
 use std::collections::HashMap;
 
-// Serialize with serde CBOR
+
+
+fn serialize_graph(filename: &str, my_map: &HashMap<String, u32>) -> Result<(), Box<dyn Error>> {
+    // serialize
+    let bin_file = File::create(filename)?;
+    serde_cbor::to_writer(bin_file, my_map)?;
+
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+    use serde_test::{assert_tokens, Token};
+
     use super::*;
 
     #[test]
@@ -47,12 +58,4 @@ mod tests {
 
         fs::remove_file(filename);
     }
-}
-
-fn serialize_graph(filename: &str, my_map: &HashMap<String, u32>) -> Result<(), Box<dyn Error>> {
-    // serialize
-    let bin_file = File::create(filename)?;
-    serde_cbor::to_writer(bin_file, my_map)?;
-
-    Ok(())
 }
