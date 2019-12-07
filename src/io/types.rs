@@ -14,11 +14,11 @@ impl Seeker {
         }
     }
 
-    pub fn chromosome(&self) ->  &str{
+    pub fn chromosome(&self) -> &str {
         &self.chromosome[..]
     }
 
-    pub fn position(&self) ->  u64{
+    pub fn position(&self) -> u64 {
         self.previous_position
     }
 }

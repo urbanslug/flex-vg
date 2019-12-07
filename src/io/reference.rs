@@ -2,8 +2,8 @@ use std::str;
 
 // Files
 use std::fs::File;
+use std::io::BufReader;
 use std::io::Read;
-use std::io::{BufReader};
 
 // VCF
 use vcf::{self, VCFReader, VCFRecord};
@@ -26,15 +26,9 @@ fn read_ref() {
     // process_fasta(f);
 }
 
-
-
-
 // File processing
 // TODO: rename gen_graph/build_graph look at libhandlegraph
-fn process_fasta<R: Read>(
-    fasta_data: R,
-    vcf_reader: &mut VCFReader<BufReader<R>>
-) -> () {
+fn process_fasta<R: Read>(fasta_data: R, vcf_reader: &mut VCFReader<BufReader<R>>) -> () {
     // Should we check for record ID in case the VCF and reference don't match?
 
     // let mut v: Vec<&SequenceRecord> = Vec::new();
@@ -108,7 +102,7 @@ fn splitter<R: Read>(
                 }
             }
             // If there isn't a seeker it means this is the first split so we start at 0
-            _ => 0
+            _ => 0,
         };
 
         // Slice the sequence
@@ -116,12 +110,9 @@ fn splitter<R: Read>(
         let p = str::from_utf8(p).unwrap();
         println!("{}", p);
 
-
         // Update the seeker
         let new_seeker = Seeker::new(record.chromosome.clone(), record.position);
         opt_seeker.replace(new_seeker);
-
-
     };
 
     /*
@@ -140,7 +131,7 @@ fn splitter<R: Read>(
             process_record(&buffered_record, &seq_record);
         } else {
             vcf_record_buffer.write(buffered_record);
-            return
+            return;
         }
     }
 
@@ -166,9 +157,10 @@ fn splitter<R: Read>(
         } else {
             // store the VCF record in a buffer
             // use it when we start to read that part of the reference
-            println!("Moving to another sequence because of chromosome {} id {}",
-                     vcf_record.chromosome,
-                     sequence_id);
+            println!(
+                "Moving to another sequence because of chromosome {} id {}",
+                vcf_record.chromosome, sequence_id
+            );
             println!("Storing record with ID {} \n\n", vcf_record.chromosome);
             vcf_record_buffer.write(vcf_record);
             break;

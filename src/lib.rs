@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_variables,)]
+#![allow(dead_code, unused_variables)]
 
 //! flex_vg is a [variation graph] tool written in rust which aims for compatibility with [libhandlegraph].
 //!
@@ -11,7 +11,6 @@
 //! // Real example coming up
 //! assert_eq!(3,3);
 //! ```
-
 
 mod io;
 

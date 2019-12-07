@@ -1,10 +1,8 @@
 //! Serialize with serde CBOR
 
-use std::fs::{File};
-use std::error::Error;
 use std::collections::HashMap;
-
-
+use std::error::Error;
+use std::fs::File;
 
 fn serialize_graph(filename: &str, my_map: &HashMap<String, u32>) -> Result<(), Box<dyn Error>> {
     // serialize
@@ -16,8 +14,8 @@ fn serialize_graph(filename: &str, my_map: &HashMap<String, u32>) -> Result<(), 
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
     use serde_test::{assert_tokens, Token};
+    use std::fs;
 
     use super::*;
 
