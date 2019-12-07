@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 /// Whether the strand is being traversed in positive or negative orientation
 pub enum Strand {
     /// Traversing an edge from 5' to 3'
@@ -42,4 +44,16 @@ pub struct Node<'a> {
 
     // Required: The edges to the left of this node
     links_left: Vec<Link<'a>>,
+}
+
+pub struct Graph(HashMap<i32, String>);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_update_graph() {
+        assert_eq!(1,2);
+    }
 }

@@ -29,9 +29,15 @@ fn read_ref() {
     // process_fasta(f);
 }
 
+
+
+
 // File processing
 // TODO: rename gen_graph/build_graph look at libhandlegraph
-fn process_fasta<R: Read>(fasta_data: R, vcf_reader: &mut VCFReader<BufReader<R>>) -> () {
+fn process_fasta<R: Read>(
+    fasta_data: R,
+    vcf_reader: &mut VCFReader<BufReader<R>>
+) -> () {
     // Should we check for record ID in case the VCF and reference don't match?
 
     // let mut v: Vec<&SequenceRecord> = Vec::new();
@@ -57,8 +63,6 @@ fn process_fasta<R: Read>(fasta_data: R, vcf_reader: &mut VCFReader<BufReader<R>
     .expect("Parsing failed");
 }
 
-
-
 /*
 Split the reference based on variation data.
 
@@ -80,7 +84,7 @@ Skips chromosomes when the order of chromosomes on the reference
 isn't the same as the order of chromosomes in the VCF
  */
 fn splitter<R: Read>(
-    seq: SequenceRecord,
+    seq_record: SequenceRecord,
     vcf_reader: &mut VCFReader<BufReader<R>>,
     vcf_record_buffer: &mut Buf<VCFRecord>,
     opt_seeker: &mut Option<Seeker>,
@@ -89,14 +93,38 @@ fn splitter<R: Read>(
     Name and/or a unique identifier for the sequence
     Most times refers to a chromosome
      */
-    let sequence_id = str::from_utf8(&seq.id).unwrap();
+    let sequence_id = str::from_utf8(&seq_record.id).unwrap();
     println!("Processing sequence with ID {}", sequence_id);
 
-    let process_record = |record: &VCFRecord| {
-        println!(
-            "Processing record for sequence {} and chromosome {}",
-            sequence_id, record.chromosome
-        );
+    let mut process_record = |record: &VCFRecord, seq_record: &SequenceRecord| {
+        let seq: &Cow<[u8]> = &seq_record.seq;
+        let record_pos = record.position as usize; // end
+
+        let start = match opt_seeker {
+            // If there's a seeker and it matches the chromosome use it.
+            Some(seeker) => {
+                if seeker.chromosome() == record.chromosome {
+                    seeker.position() as usize
+                } else {
+                    // this is the first split for this sequence so again start at 0
+                    0
+                }
+            }
+            // If there isn't a seeker it means this is the first split so we start at 0
+            _ => 0
+        };
+
+        // Slice the sequence
+        let p = &seq[start..record_pos];
+        let p = str::from_utf8(p).unwrap();
+        println!("{}", p);
+
+
+        // Update the seeker
+        let new_seeker = Seeker::new(record.chromosome.clone(), record.position);
+        opt_seeker.replace(new_seeker);
+
+
     };
 
     /*
@@ -112,7 +140,7 @@ fn splitter<R: Read>(
         Put it back in the buffer else process the record.
          */
         if buffered_record.chromosome == sequence_id {
-            process_record(&buffered_record);
+            process_record(&buffered_record, &seq_record);
         } else {
             vcf_record_buffer.write(buffered_record);
             return
@@ -137,7 +165,7 @@ fn splitter<R: Read>(
         let vcf_record = opt_record.unwrap();
 
         if vcf_record.chromosome == sequence_id {
-            process_record(&vcf_record)
+            process_record(&vcf_record, &seq_record)
         } else {
             // store the VCF record in a buffer
             // use it when we start to read that part of the reference
@@ -165,7 +193,7 @@ mod tests {
 ##FORMAT=<ID=PL,Number=G,Type=Float,Description=\"Phred-scaled Genotype Likelihoods\">
 #CHROM	POS    	ID    	REF	ALT 	QUAL	FILTER	INFO	FORMAT	SAMP001	SAMP002
 chr1	10	rs21549	T	C	.	PASS	.	GT	0/0	0/1
-chr1	10	rs21549	T	.	.	PASS	.	GT	0/0	0/1
+chr1	20	rs21549	T	.	.	PASS	.	GT	0/0	0/1
 chr2	33	rs34146	G	C	.	PASS	.	GT	0/0	0/1
 chr2	40	rs44459	G	TA	.	PASS	.	GT	0/0	0/1
 chr3	23	rs71549	A	CA	.	PASS	.	GT	0/0	0/1
@@ -191,7 +219,7 @@ ACTAGGGTGCCAGGACAGTTACAAGTCTGAGAGACTGCAGACAATCTAAC
 >chrY
 CCTTTGGTTGGTTGGAGGTGTGTGGGCGGGGTTGGGGGCGGTCTCTTGCT
 ACTAGGGTGCCAGGACAGTTACAAGTCTGAGAGACTGCAGACAATCTAAC
->ChrW
+>chrW
 TCTTGTTCTCAAGACCATGGTGAAATTGCTGAAGCCCTGTGTTGCCTCGC
 ",
         );
@@ -204,7 +232,7 @@ TCTTGTTCTCAAGACCATGGTGAAATTGCTGAAGCCCTGTGTTGCCTCGC
         let mut vcf_reader = VCFReader::new(yeild_vcf()).unwrap();
 
         process_fasta(reference, &mut vcf_reader);
-        panic!("Intentional panic for test");
+        // panic!("Intentional panic for test");
     }
 
     #[test]
@@ -237,9 +265,9 @@ TCTTGTTCTCAAGACCATGGTGAAATTGCTGAAGCCCTGTGTTGCCTCGC
         // VCF Records
         let record: &mut vcf::VCFRecord = &mut vcf_reader.iter().next().unwrap().unwrap();
 
-        assert_eq!(record.chromosome, "12");
-        assert_eq!(record.reference, "G");
-        assert_eq!(record.position, 91018);
-        assert_eq!(record.alternative, vec!["A", "T"]);
+        assert_eq!(record.chromosome, "chr1");
+        assert_eq!(record.reference, "T");
+        assert_eq!(record.position, 10);
+        assert_eq!(record.alternative, vec!["C"]);
     }
 }

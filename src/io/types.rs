@@ -13,6 +13,14 @@ impl Seeker {
         }
     }
 
+    pub fn chromosome(&self) ->  &str{
+        &self.chromosome[..]
+    }
+
+    pub fn position(&self) ->  u64{
+        self.previous_position
+    }
+
     pub fn update(mut self, chromosome: String, previous_position: u64) -> Self {
         self.previous_position = previous_position;
         self.chromosome = chromosome;
