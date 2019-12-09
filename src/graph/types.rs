@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 /// Whether the edge is being traversed in
-/// positive(5' to 3') or negative(3' to 5') orientation.
+/// positive(5' to 3') or negative(3' to 5') [sense].
+///
+/// [sense]: https://en.wikipedia.org/wiki/Sense_(molecular_biology)
 #[derive(PartialEq, Debug)]
 pub enum Strand {
     /// Traversing an edge from 5' to 3'
@@ -52,7 +54,7 @@ pub struct Node<'a> {
 }
 
 impl<'a> Node<'a> {
-    fn new(
+    pub fn new(
         segment: &'a str,
         offset: usize,
         id: &'a str,
