@@ -1,34 +1,9 @@
 use std::collections::HashMap;
 
-/// Whether the edge is being traversed in
-/// positive(5' to 3') or negative(3' to 5') [sense].
-///
-/// [sense]: https://en.wikipedia.org/wiki/Sense_(molecular_biology)
-#[derive(PartialEq, Debug)]
-pub enum Strand {
-    /// Traversing an edge from 5' to 3'
-    Positive,
 
-    /// Traversing an edge from 3' to 5'
-    Negative,
-}
 
-/// An edge in a [variation graph].
-///
-/// [variation graph]: https://blog.urbanslug.com/posts/2019-06-22-Introduction-to-Variation-Graphs.html
-/// This includes the nodes to the right, left and the strand of the edge
-/// i.e. the direction of traversal
-#[derive(PartialEq, Debug)]
-pub struct Link<'a> {
-    // Should this edge be traversed in the positive or negative orientation
-    strand: Strand,
-
-    // ID of nodes to the left of this edge
-    left: &'a str,
-
-    // ID of nodes to the right of this edge
-    right: &'a str,
-}
+type NodeId<'a> =  &'a str;
+type EdgeList<'a> = Vec<NodeId<'a>>;
 
 /// A vertex or node in a variation graph
 pub struct Node<'a> {
@@ -41,17 +16,17 @@ pub struct Node<'a> {
     // Required: Unique identifier of each node.
     // Currently, a SHA 256 hash of the concatenation of segment, “+” and offset
     // TODO: Not require an offset for de novo graphs to be built
-    pub id: &'a str,
+    pub id: NodeId<'a>,
 
     // Optional: ID of the reference from which we got this node
     reference: &'a str,
 
     // Required: The edges to the right of this node
-    links_right: Vec<Link<'a>>,
+    nodes_right: EdgeList<'a>,
 
     // Required: The edges to the left of this node
-    links_left: Vec<Link<'a>>,
-}
+    nodes_left: EdgeList<'a>,}
+
 
 impl<'a> Node<'a> {
     pub fn new(
@@ -59,22 +34,25 @@ impl<'a> Node<'a> {
         offset: usize,
         id: &'a str,
         reference: &'a str,
-        links_right: Vec<Link<'a>>,
-        links_left: Vec<Link<'a>>,
+        nodes_right: EdgeList<'a>,
+        nodes_left: EdgeList<'a>,
     ) -> Self {
         Node {
             segment,
             offset,
             id,
             reference,
-            links_left,
-            links_right,
+            nodes_left,
+            nodes_right,
         }
     }
 }
 
+
 // TODO: link id and node
 /// A [variation graph] is a HashMap of [`id`] to [`Node`].
+/// This has several advantages for us:
+///  - duplicates: we get to avoid duplicates for "free"
 ///
 /// [variation graph]: https://blog.urbanslug.com/posts/2019-06-22-Introduction-to-Variation-Graphs.html
 /// [`id`]: ../../vg/graph/struct.Node.html
@@ -99,6 +77,27 @@ impl<'a> Graph<'a> {
         let hashmap = &self.0;
         hashmap.contains_key(id)
     }
+
+    fn update_node(&mut self, n: &mut Node) {
+        unimplemented!("");
+    }
+
+    // Add a node to the right of the current node
+    fn add_node_right(&mut self, mut n: Node<'a>, mut r: Node<'a>){
+
+        // Add node r to the right of n
+        n.nodes_right.push(r.id);
+
+        // Add node n to the right of r
+        r.nodes_left.push(n.id);
+
+        let hm = &mut self.0;
+
+        // Update the backing hashmap.
+        // Replaces the current node.
+        hm.insert(n.id, n);
+        hm.insert(r.id, r);
+    }
 }
 
 #[cfg(test)]
@@ -120,19 +119,22 @@ mod tests {
         )
     }
 
+    // Node
     #[test]
-    fn can_create_node() {
+    fn test_can_create_node() {
         let n: Node = yield_node();
         let id = &RAW_SEQ[2..5];
+        let empty_node_list: EdgeList = Vec::new();
 
         assert_eq!(n.segment, RAW_SEQ);
         assert_eq!(n.offset, 23);
         assert_eq!(n.id, id);
         assert_eq!(n.reference, RAW_REF);
-        assert_eq!(n.links_left, Vec::new());
-        assert_eq!(n.links_right, Vec::new());
+        assert_eq!(n.nodes_left, empty_node_list);
+        assert_eq!(n.nodes_right, empty_node_list);
     }
 
+    // Graph
     #[test]
     fn test_can_create_a_singleton_graph() {
         let id = &RAW_SEQ[2..5];
@@ -141,5 +143,30 @@ mod tests {
         g.add_node(n);
 
         assert!(g.has_node(id));
+    }
+
+    #[test]
+    fn test_add_node_right() {
+        let n: Node = yield_node();
+        let other_seq: &str = "TGATCTACTGATGATCTGAT";
+
+        let n_id = &RAW_SEQ[2..5];
+        let r_id = &other_seq[2..5];
+
+        let r = Node::new(
+            &other_seq[..],
+            OFFSET,
+            &other_seq[2..5],
+            &RAW_REF[..],
+            Vec::new(),
+            Vec::new(),
+        );
+
+        let mut g = Graph::new();
+
+        g.add_node_right(n, r);
+
+        assert!(g.has_node(n_id));
+        assert!(g.has_node(r_id));
     }
 }
