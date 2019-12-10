@@ -6,6 +6,7 @@ type NodeId<'a> =  &'a str;
 type EdgeList<'a> = Vec<NodeId<'a>>;
 
 /// A vertex or node in a variation graph
+#[derive(Debug, PartialEq, Clone)]
 pub struct Node<'a> {
     // Required: the piece of sequence associated with the node. A string of alphabet A, T, C, and G.
     segment: &'a str,
@@ -48,6 +49,19 @@ impl<'a> Node<'a> {
     }
 }
 
+macro_rules! digraph {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_graph = Graph::new();
+            $(
+                let (n, r) = $x;
+                temp_graph.add_node_right(n, r);
+            )*
+                temp_graph
+        }
+    };
+}
+
 
 // TODO: link id and node
 /// A [variation graph] is a HashMap of [`id`] to [`Node`].
@@ -73,13 +87,21 @@ impl<'a> Graph<'a> {
         hashmap.insert(id, n);
     }
 
-    fn has_node(&self, id: &'a str) -> bool {
+    fn has_node(&self, id: NodeId) -> bool {
         let hashmap = &self.0;
         hashmap.contains_key(id)
     }
 
-    fn update_node(&mut self, n: &mut Node) {
-        unimplemented!("");
+    fn get_node(&mut self, id: NodeId) -> Option< &Node<'a> > {
+        let hashmap = &self.0;
+
+        hashmap.get(id)
+    }
+
+    fn get_node_mut(&mut self, id: NodeId) -> Option< &mut Node<'a> > {
+        let hashmap = &mut self.0;
+
+        hashmap.get_mut(id)
     }
 
     // Add a node to the right of the current node
@@ -168,5 +190,43 @@ mod tests {
 
         assert!(g.has_node(n_id));
         assert!(g.has_node(r_id));
+    }
+
+    #[test]
+    fn test_graph_macro() {
+        let n: Node = yield_node();
+        let n_copy = n.clone();
+        let other_seq: &str = "TGATCTACTGATGATCTGAT";
+
+        let n_id = &RAW_SEQ[2..5];
+        let r_id = &other_seq[2..5];
+
+        let r = Node::new(
+            &other_seq[..],
+            3,
+            &other_seq[2..5],
+            &RAW_REF[..],
+            Vec::new(),
+            Vec::new(),
+        );
+
+        let s = Node::new(
+            &other_seq[..],
+            10,
+            &other_seq[1..3],
+            &RAW_REF[..],
+            Vec::new(),
+            Vec::new(),
+        );
+
+        let mut g = digraph![
+            (n, r),
+            (r, s),
+            (n,s)
+        ];
+
+        assert!(g.has_node(n_id));
+        assert!(g.has_node(r_id));
+        assert_eq!(g.get_node(n_id).unwrap(), &n_copy);
     }
 }
