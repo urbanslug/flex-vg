@@ -66,8 +66,8 @@ impl<'a> Graph<'a> {
         Graph(vg)
     }
 
-    pub fn hashmap(self) -> HashMap<&'a str, Node<'a>> {
-        self.0
+    pub fn hashmap(&self) -> &HashMap<&'a str, Node<'a>> {
+        &self.0
     }
 
     // Check whether a node exists

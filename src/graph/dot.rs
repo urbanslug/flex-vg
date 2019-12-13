@@ -6,7 +6,7 @@ use std::io::Write;
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-fn fmt_graph_to_dot(g: Graph) {
+fn fmt_graph_to_dot(g: &Graph) {
     let hm = g.hashmap();
 
     let mut file = File::create("foo.dot").unwrap();
@@ -107,6 +107,6 @@ mod tests {
         g.add_edge_from_id("b", "d");
         g.add_edge_from_id("c", "d");
 
-        fmt_graph_to_dot(g);
+        fmt_graph_to_dot(&g);
     }
 }
