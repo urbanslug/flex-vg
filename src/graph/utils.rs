@@ -1,10 +1,8 @@
 // Hashing
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 
 // Local
 //use crate::graph::types::{Node, Graph};
-
-
 
 /// The keys of the hash table are SHA256 hashes of the concatenation of:
 ///  - the sequence
@@ -24,5 +22,3 @@ fn gen_node_id<'a>(seq: &'a str, offset: usize) -> String {
     // TODO: not return a copy of the string
     hex_str.clone()
 }
-
-
