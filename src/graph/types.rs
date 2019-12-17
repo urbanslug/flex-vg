@@ -1,10 +1,15 @@
+use hex;
+use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::fmt;
 
-type NodeId<'a> = &'a str;
-type EdgeList<'a> = Vec<NodeId<'a>>;
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Copy)]
+pub struct NodeId([u8; 32]);
+
+type EdgeList = Vec<NodeId>;
 
 /// A vertex or node in a variation graph
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub struct Node<'a> {
     // Required: the piece of sequence associated with the node. A string of alphabet A, T, C, and G.
     pub segment: &'a str,
@@ -15,27 +20,31 @@ pub struct Node<'a> {
     // Required: Unique identifier of each node.
     // Currently, a SHA 256 hash of the concatenation of segment, “+” and offset
     // TODO: Not require an offset for de novo graphs to be built
-    pub id: NodeId<'a>,
+    pub id: NodeId,
 
     // Optional: ID of the reference from which we got this node
     reference: &'a str,
 
     // Required: The edges to the right of this node
-    pub nodes_right: EdgeList<'a>,
+    pub nodes_right: EdgeList,
 
     // Required: The edges to the left of this node
-    nodes_left: EdgeList<'a>,
+    nodes_left: EdgeList,
 }
+
+use crate::graph::utils;
 
 impl<'a> Node<'a> {
     pub fn new(
         segment: &'a str,
         offset: usize,
-        id: &'a str,
         reference: &'a str,
-        nodes_right: EdgeList<'a>,
-        nodes_left: EdgeList<'a>,
+        nodes_right: EdgeList,
+        nodes_left: EdgeList,
     ) -> Self {
+        let id = utils::gen_node_hash(segment, offset).unwrap();
+        let id = NodeId(id);
+
         Node {
             segment,
             offset,
@@ -44,6 +53,28 @@ impl<'a> Node<'a> {
             nodes_left,
             nodes_right,
         }
+    }
+
+    pub fn raw_id(&self) -> &[u8; 32] {
+        &self.id.0
+    }
+}
+
+impl std::fmt::Display for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", hex::encode(self.0))
+    }
+}
+
+impl Borrow<[u8; 32]> for NodeId {
+    fn borrow(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+impl<'a> std::fmt::Display for Node<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.id)
     }
 }
 
@@ -57,37 +88,38 @@ impl<'a> Node<'a> {
 /// [`Node`]: ../../vg/graph/struct.Node.html
 ///
 /// Attempting compatibility with https://github.com/vgteam/libhandlegraph
-pub struct Graph<'a>(HashMap<&'a str, Node<'a>>);
+type InternalGraph<'a> = HashMap<NodeId, Node<'a>>;
+pub struct Graph<'a>(InternalGraph<'a>);
 
 impl<'a> Graph<'a> {
     // Create a new empty graph
     pub fn new() -> Graph<'a> {
-        let vg: HashMap<&'a str, Node<'a>> = HashMap::new();
+        let vg: InternalGraph<'a> = HashMap::new();
         Graph(vg)
     }
 
-    pub fn hashmap(&self) -> &HashMap<&'a str, Node<'a>> {
+    pub fn hashmap(&self) -> &InternalGraph<'a> {
         &self.0
     }
 
     // Check whether a node exists
     fn has_node(&self, id: NodeId) -> bool {
         let hashmap = &self.0;
-        hashmap.contains_key(id)
+        hashmap.contains_key(&id)
     }
 
     // Get an immutable reference to a node
     fn get_node(&self, id: NodeId) -> Option<&Node<'a>> {
         let hashmap = &self.0;
 
-        hashmap.get(id)
+        hashmap.get(&id)
     }
 
     // Get a mutable reference to the node
     fn get_node_mut(&mut self, id: NodeId) -> Option<&mut Node<'a>> {
         let hashmap = &mut self.0;
 
-        hashmap.get_mut(id)
+        hashmap.get_mut(&id)
     }
 
     // Functions that mutate the graph
@@ -102,7 +134,7 @@ impl<'a> Graph<'a> {
     }
 
     // Does an edge from x to y exist?
-    fn edge_exists(&self, x: NodeId<'a>, y: NodeId<'a>) -> bool {
+    fn edge_exists(&self, x: NodeId, y: NodeId) -> bool {
         // Does y exist in x's right nodes
         let x_right_nodes = &self.get_node(x).unwrap().nodes_right;
 
@@ -136,7 +168,7 @@ impl<'a> Graph<'a> {
         }
     }
 
-    pub fn add_edge_from_id(&mut self, x: NodeId<'a>, y: NodeId<'a>) {
+    pub fn add_edge_from_id(&mut self, x: NodeId, y: NodeId) {
         if self.has_node(x) && self.has_node(y) {
             // Add the id of x to the left nodes list of y
             self.get_node_mut(y).unwrap().nodes_left.push(x);
@@ -159,31 +191,27 @@ impl<'a> Graph<'a> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::graph::utils;
 
     const RAW_SEQ: &str = "ACTGATGATCTGATCGGATA";
     const RAW_REF: &str = "GHR38";
     const OFFSET: usize = 23;
 
     fn yield_node<'a>() -> Node<'a> {
-        Node::new(
-            &RAW_SEQ[..],
-            OFFSET,
-            &RAW_SEQ[2..5],
-            &RAW_REF[..],
-            Vec::new(),
-            Vec::new(),
-        )
+        Node::new(&RAW_SEQ[..], OFFSET, &RAW_REF[..], Vec::new(), Vec::new())
     }
 
+    fn yeild_id() -> NodeId {
+        NodeId(utils::gen_node_hash(RAW_SEQ, 23).unwrap())
+    }
     // Node
     #[test]
     fn test_can_create_node() {
         let n: Node = yield_node();
-        let id = &RAW_SEQ[2..5];
+        let id = yeild_id();
         let empty_node_list: EdgeList = Vec::new();
 
         assert_eq!(n.segment, RAW_SEQ);
@@ -197,7 +225,7 @@ mod tests {
     // Graph
     #[test]
     fn test_can_create_a_singleton_graph() {
-        let id = &RAW_SEQ[2..5];
+        let id = yeild_id();
         let n = yield_node();
         let mut g = Graph::new();
         g.add_node(n);
