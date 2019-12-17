@@ -24,17 +24,18 @@ digraph {{
 \tnode [shape=box];
 ",
         NAME, VERSION
-    );
+    )
+    .unwrap();
 
     // Write nodes
     writeln!(&mut file, "\t// nodes").unwrap();
 
     for (k, v) in hm.iter() {
-        writeln!(&mut file, "\t{} [label=\"{}\"]", k, &v.segment[..5]);
+        writeln!(&mut file, "\t{} [label=\"{}\"]", k, &v.segment[..5]).unwrap();
     }
 
     // write edges
-    writeln!(&mut file, "\n\t// edges");
+    writeln!(&mut file, "\n\t// edges").unwrap();
 
     for (k, Node { nodes_right, .. }) in hm.iter() {
         for n in nodes_right.iter() {
@@ -42,7 +43,7 @@ digraph {{
         }
     }
 
-    writeln!(&mut file, "}}");
+    writeln!(&mut file, "}}").unwrap();
 }
 
 #[cfg(test)]
