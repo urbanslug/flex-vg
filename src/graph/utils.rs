@@ -1,24 +1,28 @@
-// Hashing
+use hex;
 use sha2::{Digest, Sha256};
+use std::array::TryFromSliceError;
+use std::convert::TryInto;
 
-// Local
-//use crate::graph::types::{Node, Graph};
 
-/// The keys of the hash table are SHA256 hashes of the concatenation of:
-///  - the sequence
-///  - a plus symbol(+)
-///  - offset.
-fn gen_node_id<'a>(seq: &'a str, offset: usize) -> String {
-    let str_to_hash = format!("{}+{}", seq, offset);
+// We want to return store hashes as 32 byte arrays instead of
+// hex strings to be conservative with memory usage
+fn sha256(msg: &[u8]) -> Result<[u8; 32], TryFromSliceError> {
+    Sha256::digest(msg).as_slice().try_into()
+}
 
-    // TODO: is it a good idea to keep creating a new hasher?
-    // or use https://docs.rs/sha2/0.8.0/sha2/trait.Digest.html#tymethod.result_reset
-    let mut hasher: Sha256 = Digest::new();
+#[cfg(test)]
+mod tests {
 
-    hasher.input(str_to_hash.as_bytes());
-    let a = hasher.result();
-    let hex_str = format!("{:x}", a);
+    use super::*;
 
-    // TODO: not return a copy of the string
-    hex_str.clone()
+    #[test]
+    fn test_gen_correct_hash() {
+        let txt = "Hello, World!".as_bytes();
+        let result_hash = sha256(txt).unwrap();
+        let hex_str = hex::encode(result_hash);
+        assert_eq!(
+            "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f",
+            hex_str
+        );
+    }
 }
