@@ -27,7 +27,7 @@ digraph {{
     );
 
     // Write nodes
-    writeln!(&mut file, "\t// nodes");
+    writeln!(&mut file, "\t// nodes").unwrap();
 
     for (k, v) in hm.iter() {
         writeln!(&mut file, "\t{} [label=\"{}\"]", k, &v.segment[..5]);
@@ -38,7 +38,7 @@ digraph {{
 
     for (k, Node { nodes_right, .. }) in hm.iter() {
         for n in nodes_right.iter() {
-            writeln!(&mut file, "\t{} -> {}", k, n);
+            writeln!(&mut file, "\t{} -> {}", k, n).unwrap();
         }
     }
 
